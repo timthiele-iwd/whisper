@@ -103,7 +103,7 @@ for i, file in enumerate(audio_files):
         transcription = replace_character_at_position(transcription, error_position, replacement="?")
 
   with open(text_file, "w") as f: # Write the transcription to the text file
-    f.write(encoded_transcription)
+    f.write(transcription)
   print(f"Saved transcription as {text_file}")
 
 # Move the audio files to processed folder
