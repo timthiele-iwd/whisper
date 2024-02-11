@@ -1,4 +1,3 @@
-# === IMPORTS ===
 import whisper
 import time
 import librosa

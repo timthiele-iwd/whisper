@@ -3,3 +3,12 @@ Data
 
 logs
 \logs
+
+dist
+\dist
+
+build
+\build
+
+__pycache__
+\__pycache__

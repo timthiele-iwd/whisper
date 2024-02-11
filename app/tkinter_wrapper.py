@@ -82,8 +82,8 @@ class App(customtkinter.CTk):
         self.chosen_language = None
         self.toplevel_window = None
 
-        customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
-        customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+        # customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
+        # customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
         self.title("Whisper App")
         self.geometry("300x400")
@@ -139,4 +139,6 @@ if __name__ == "__main__":
     app = App(logger=lh)
     app.mainloop()
     end = datetime.now()
-    lh.log(f"\n\nEND: Transcription app ran for {end - start}.")
+    duration = end - start
+    duration_in_seconds = duration.total_seconds()
+    lh.log(f"\n\nEND: Transcription app ran for {duration_in_seconds} seconds.")
