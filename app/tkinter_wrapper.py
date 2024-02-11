@@ -1,15 +1,24 @@
+# === PACKAGE USED ===
 # https://github.com/TomSchimansky/CustomTkinter
 # https://customtkinter.tomschimansky.com/
 
-from WhisperHandler import Whisper_Handler
+
+import sys, os
+root_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(root_directory)
+print(sys.path)
 import customtkinter
-import os, sys, json
+import json
+from model.WhisperHandler import Whisper_Handler
+from utils.logging_custom import LogHandler
+from datetime import datetime
 
 
 class ToplevelWindow(customtkinter.CTkToplevel):
-    def __init__(self, master=None, chosen_language=None, whisper_languages=None, **kwargs):
+    def __init__(self, master=None, logger=None, chosen_language=None, whisper_languages=None, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
+        self.lh = logger
         self.chosen_language = chosen_language
         self.whisper_languages = whisper_languages
         self.title("Running transcription")
@@ -21,17 +30,17 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         self.after(3000, self.start_whisper_handler)
 
     def button_callback(self):
-        print("Top level window closed.")
+        self.lh.log("Top level window closed.")
         self.destroy()
-        print("Main window closed.")
+        self.lh.log("Main window closed.")
         self.master.destroy()
     
     def start_whisper_handler(self):
         if self.chosen_language is not None:
             chosen_language_abbr = self.whisper_languages[self.chosen_language]
             file_root = os.path.expanduser("~/Documents/Whisper/Data")
-            print("Starting transcription with whisper.")
-            wh = Whisper_Handler(file_root, chosen_language_abbr)
+            self.lh.log("Starting transcription with whisper.")
+            wh = Whisper_Handler(file_root, chosen_language_abbr, logger=self.lh)
             state = wh.transcribe()
             
         self.label = customtkinter.CTkLabel(self, text=state)
@@ -66,9 +75,10 @@ class ScrollableRadiobuttonFrame(customtkinter.CTkScrollableFrame):
 
 class App(customtkinter.CTk):
     
-    def __init__(self):
+    def __init__(self, logger):
         super().__init__()
         
+        self.lh = logger
         self.chosen_language = None
         self.toplevel_window = None
 
@@ -81,7 +91,7 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        with open("languages.json", 'r', encoding='utf-8') as file:
+        with open("model/languages.json", 'r', encoding='utf-8') as file:
             whisper_languages = json.load(file)
             self.whisper_languages = {value: key for key, value in whisper_languages.items()}
 
@@ -93,16 +103,17 @@ class App(customtkinter.CTk):
 
 
     def button_callback(self):
-        print("Transcribe button pressed.")
+        self.lh.log("Transcribe button pressed.")
         self.open_toplevel()
 
 
     def open_toplevel(self):
         chosen_language = self.radiobutton_frame.get()
-        print(f"Chosen language: {chosen_language}.")
+        self.lh.log(f"Chosen language: {chosen_language}.")
         if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
             self.toplevel_window = ToplevelWindow(
-                self, 
+                self,
+                logger=self.lh,
                 chosen_language=chosen_language, 
                 whisper_languages=self.whisper_languages
             )  # create window if its None or destroyed
@@ -111,5 +122,21 @@ class App(customtkinter.CTk):
             self.toplevel_window.focus()  # if window exists focus it
 
 
-app = App()
-app.mainloop()
+if __name__ == "__main__":
+
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    now = datetime.now()
+    file_name = f"audio_transcription_{now.strftime('%Y_%m_%d-%H_%M_%S')}.txt"
+    log_file_path = os.path.join(log_dir, file_name)
+
+    lh = LogHandler(
+        log_to_file=True,
+        log_file_path=log_file_path
+    )
+
+    start = datetime.now()
+    app = App(logger=lh)
+    app.mainloop()
+    end = datetime.now()
+    lh.log(f"\n\nEND: Transcription app ran for {end - start}.")
