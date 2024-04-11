@@ -5,9 +5,12 @@ import soundfile as sf
 import re
 import os
 import shutil
+from utils.utils import write_to_excel
+from pydub import AudioSegment
 
 
 class Whisper_Handler:
+    
     def __init__(self, file_root, language="de", model_size="medium", logger=None):
         if logger is None:
             raise ValueError("Please hand over a logging object")
@@ -34,10 +37,30 @@ class Whisper_Handler:
         try:
           audio_folder, processed_folder, text_file_folder = self.folders["raw"], self.folders["processed"], self.folders["transcribed"]
           audio_files, audio_names = [], []
+
           for file in os.listdir(audio_folder):
-            if file.endswith(".m4a") or file.endswith(".mp3"):
-              audio_files.append(os.path.join(audio_folder, file))
+            
+            a = 0
+
+            if file.endswith(".mp3"):
+              file_path = os.path.join(audio_folder, file)
+              audio_files.append(file_path)
               audio_names.append(file)
+              continue
+            
+            else:
+              file_extension = file.split('.')[-1].lower()
+              format = None
+              if file_extension in ['wav', 'm4a', 'ogg', 'flac']:
+                  format = file_extension
+                  source_audio  = AudioSegment.from_file(file_path, format=format)
+                  new_source_audio = file_path.replace(format, ".mp3")
+                  source_audio.export(new_source_audio, format="mp3")
+                  audio_files.append(new_source_audio)
+                  audio_names.append(file.replace(format, ".mp3"))
+                  a = 0
+              else:
+                  raise ValueError("Audio dtype not converted.")
 
           for f in audio_files:
             self.lh.log(f)
@@ -49,6 +72,7 @@ class Whisper_Handler:
           # Loop through the audio files, split each audio file based on pauses in speech then transcribe them with Whisper.
           for i, file in enumerate(audio_files):
             self.lh.log(f"Processing {audio_names[i]}...")
+
             # Load the audio file and convert it to 16 kHz mono
             audio, sr = librosa.load(file, sr=16000, mono=True)
             # Detect pauses and split the audio. We use a threshold of -30 dB and a minimum pause length of 0.5 seconds.
@@ -91,6 +115,11 @@ class Whisper_Handler:
             with open(text_file, "w") as f: # Write the transcription to the text file
               f.write(transcription)
             self.lh.log(f"Saved transcription as {text_file}")
+
+            # EXCEL
+            data = [{'Filename': audio_names[i], 'Transcription': transcription}]
+            excel_path = os.path.join(self.folders["transcribed"], "transcribed.xlsx")
+            write_to_excel(excel_path, data)
 
           # Move the audio files to processed folder
           if not os.path.exists(processed_folder): # Create the folder if it does not exist
