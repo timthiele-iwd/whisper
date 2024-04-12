@@ -40,10 +40,14 @@ class Whisper_Handler:
 
           for file in os.listdir(audio_folder):
             
+            file_path = os.path.join(audio_folder, file)
+            audio_files.append(file_path)
+            audio_names.append(file)
             a = 0
 
+            # TODO: CONVERSION
+            """
             if file.endswith(".mp3"):
-              file_path = os.path.join(audio_folder, file)
               audio_files.append(file_path)
               audio_names.append(file)
               continue
@@ -53,15 +57,19 @@ class Whisper_Handler:
               format = None
               if file_extension in ['wav', 'm4a', 'ogg', 'flac']:
                   format = file_extension
-                  source_audio  = AudioSegment.from_file(file_path, format=format)
-                  new_source_audio = file_path.replace(format, ".mp3")
-                  source_audio.export(new_source_audio, format="mp3")
-                  audio_files.append(new_source_audio)
+                  if format == "wav":
+                      continue
+                  else:
+                      source_audio  = AudioSegment.from_file(file_path, format=format)
+                  new_source_audio_path = file_path.replace("."+format, ".mp3")
+                  source_audio.export(new_source_audio_path, format="mp3")
+                  audio_files.append(new_source_audio_path)
                   audio_names.append(file.replace(format, ".mp3"))
                   a = 0
               else:
                   raise ValueError("Audio dtype not converted.")
-
+              """
+          
           for f in audio_files:
             self.lh.log(f)
 
