@@ -1,4 +1,4 @@
 @echo off
-call conda activate whisper
+call C:\Users\TThiele\AppData\Local\anaconda3\Scripts\activate.bat whisper
 python app\tkinter_wrapper.py
 pause
