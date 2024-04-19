@@ -3,7 +3,7 @@ from typing import List, Dict
 import os
 
 
-def write_to_excel(excel_path: str, data: List[Dict[str, str | float]], sheet_name='Sheet1') -> None:
+def write_to_excel(excel_path, data, sheet_name='Sheet1') -> None:
 
      # Ensure directory exists
     os.makedirs(os.path.dirname(excel_path), exist_ok=True)
